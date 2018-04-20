@@ -212,10 +212,14 @@ public class CueController : Photon.MonoBehaviour
 		{
 			SyncFrame ();
 		}
-		Screen.sleepTimeout = SleepTimeout.NeverSleep;
+		#if UNITY_IOS
+			iPhoneSettings.screenCanDarken = false;
+		#endif
+		#if UNITY_ANDROID
+			Screen.sleepTimeout = SleepTimeout.NeverSleep;
+		#endif
 #if UNITY_ANDROID || UNITY_IOS
 
-		//iPhoneSettings.screenCanDarken = false;
         if (GameManager.isMobile){
             MaxDelta = (CurNodeBack.transform.position.y - CurNodeBack1.transform.position.y)*12/11;
             ControlCuePosition0 = ControlCue.transform.position;
@@ -312,6 +316,7 @@ public class CueController : Photon.MonoBehaviour
             {
                 hand.SetActive(false);
                 cueStrPos = GetWorldPointConvertedPosition();
+                Debug.Log("cueStrPos :    " + cueStrPos);
 #if UNITY_ANDROID || UNITY_IOS
                 canControlled = true;                
 #else
@@ -323,7 +328,7 @@ public class CueController : Photon.MonoBehaviour
 		if(Input.GetMouseButtonUp(0))
 		{
 			if(cueDisplacement != 0.0f && sideControlled && canUpdate && !whiteballmoving){
-                Debug.Log(cueDisplacement);
+				Debug.Log(cueDisplacement + " :   cueDisplacement");
 				isShoting = true;                
 			}
 			//cueRotation.localPosition = checkCuePosition - cueDisplacement*Vector3.forward;
@@ -362,7 +367,7 @@ public class CueController : Photon.MonoBehaviour
 						float positionZ = -Mathf.Sqrt(Mathf.Clamp(  Mathf.Pow( ballRadius, 2.0f ) - ( Mathf.Pow( cueBallPivot.PositionX, 2.0f) +  Mathf.Pow(Yclamp, 2.0f )), 0.0f, Mathf.Pow( ballRadius, 2.0f ) ));
 
 						checkCuePosition = ballRadius*(new Vector3(cueBallPivot.PositionX, Yclamp, positionZ));
-						cueRotation.localPosition = checkCuePosition - cueDisplacement*Vector3.forward;
+						cueRotation.localPosition = checkCuePosition + cueDisplacement*Vector3.forward;
 						sideCue.localPosition=new Vector3(-9,11,sideCue.localPosition.z)+cueDisplacement*Vector3.right;
 
 						cueDisplacement=previousCueDisplacement;
@@ -470,16 +475,16 @@ public class CueController : Photon.MonoBehaviour
 		
 		cueForceValue = Mathf.Clamp01(cueDisplacement/cueMaxDisplacement);
 		checkCuePosition = ballRadius*(new Vector3(cueBallPivot. PositionX, Yclamp, positionZ));
-		cueRotation.localPosition = checkCuePosition - cueDisplacement*Vector3.forward;
+		cueRotation.localPosition = checkCuePosition + cueDisplacement*Vector3.forward;
 		sideCue.localPosition=new Vector3(-9,11,13.24f)+cueDisplacement*Vector3.right;
 		
 		if(aiShootingAmount<0)
 		{
 			GenerateCurrentFrame();
-			OnShotCue(CurrentFrame,cuePivot.forward, cueForceValue, rotationDisplacement.x, rotationDisplacement.y); 
+			OnShotCue(CurrentFrame,-cuePivot.forward, cueForceValue, rotationDisplacement.x, rotationDisplacement.y); 
 			cueDisplacement = 0.0f;  
 			cueForceValue=0.0f;
-			cueRotation.localPosition = checkCuePosition - cueDisplacement*Vector3.forward;
+			cueRotation.localPosition = checkCuePosition + cueDisplacement*Vector3.forward;
 			sideCue.localPosition=new Vector3(-9,11,13.24f)+cueDisplacement*Vector3.right;
 			PositionXY=Vector3.zero;
 			cueBallPivot.PositionX=PositionXY.x;
@@ -489,7 +494,7 @@ public class CueController : Photon.MonoBehaviour
 			return;
 		}
 		
-		cuePivot.LookAt(cuePivot.position+current_shootdir);
+		cuePivot.LookAt(-cuePivot.position+current_shootdir);
 	}
 	public void drawAimLine(){
 		cueRotation.localScale=new Vector3(1.0f,1.0f,1.0f);
@@ -497,17 +502,17 @@ public class CueController : Photon.MonoBehaviour
 		GenerateCurrentFrame();
 //		print (cueDisplacement);
 		if(cueDisplacement < 0.15f*cueMaxDisplacement && Player.masse)
-			AimLine.DrawAimLines(new Frame(CurrentFrame),cuePivot.forward, 1.0f, 0.0f,0.0f,false);
+			AimLine.DrawAimLines(new Frame(CurrentFrame),-cuePivot.forward, 1.0f, 0.0f,0.0f,false);
 		else
 		{
-			AimLine.DrawAimLines(new Frame(CurrentFrame),cuePivot.forward, cueForceValue, rotationDisplacement.x, rotationDisplacement.y,Player.masse);
+			AimLine.DrawAimLines(new Frame(CurrentFrame),-cuePivot.forward, cueForceValue, rotationDisplacement.x, rotationDisplacement.y,Player.masse);
 		}
 	}
 
 	private Vector3 GetWorldPointConvertedPosition ()
 	{
 		Vector3 worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-		return new Vector3(worldPoint.x, cuePivot.position.y, worldPoint.z);
+		return new Vector3(worldPoint.x, -cuePivot.position.y, worldPoint.z);
 	}
 
 	private void GenerateCurrentFrame()
@@ -581,7 +586,7 @@ public class CueController : Photon.MonoBehaviour
 				{
 					GenerateCurrentFrame();
 					clock_left=clock_right=Constant.play_time;
-					OnShotCue(CurrentFrame,cuePivot.forward, cueForceValue, rotationDisplacement.x, rotationDisplacement.y);
+					OnShotCue(CurrentFrame,-cuePivot.forward, cueForceValue, rotationDisplacement.x, rotationDisplacement.y);
 					RefreshAllBoosts();		
 					is_firstshoot=false;
 	#if !MOBILE
@@ -593,7 +598,7 @@ public class CueController : Photon.MonoBehaviour
 				Invoke("RessetBallPivot", 0.5f);
 			}
 		}
-		cueRotation.localPosition = checkCuePosition - cueDisplacement*Vector3.forward;
+		cueRotation.localPosition = checkCuePosition + cueDisplacement*Vector3.forward;
 		sideCue.localPosition=new Vector3(-9,11,sideCue.localPosition.z)+cueDisplacement*Vector3.right;
 		PositionXY=Vector3.zero;
 	}
@@ -607,7 +612,7 @@ public class CueController : Photon.MonoBehaviour
 		isShoting = false;
 		cueBallPivot.Reset();
 		checkCuePosition = ballRadius*(new Vector3(0.0f, 0.0f, -1.0f));
-		cueRotation.localPosition = checkCuePosition - cueDisplacement*Vector3.forward;
+		cueRotation.localPosition = checkCuePosition + cueDisplacement*Vector3.forward;
 	}
 
 	Vector3 cue_localpos=Vector3.zero;
@@ -640,7 +645,7 @@ public class CueController : Photon.MonoBehaviour
 				return;
 			cue_localpos=cueRotation.localPosition;
 			cue_pos=ballController.transform.position;
-			cue_rot=cuePivot.localEulerAngles;
+			cue_rot=-cuePivot.localEulerAngles;
 			cue_ballpivot=cueBallPivot.ballSphere.localPosition;
 			PositionXY0=new Vector3(cueBallPivot.PositionX,cueBallPivot.PositionY,cueForceValue);
 
@@ -668,7 +673,7 @@ public class CueController : Photon.MonoBehaviour
 
 			startcue_localpos=cueRotation.localPosition;
 			startcue_pos=ballController.transform.position;
-			startcue_rot=cuePivot.localEulerAngles;
+			startcue_rot=-cuePivot.localEulerAngles;
 			startcue_ballpivot=cueBallPivot.ballSphere.localPosition;
 			
 			if(Mathf.Abs (startcue_rot.x-cue_rot.x)>250 || Mathf.Abs (startcue_rot.y-cue_rot.y)>250 || Mathf.Abs (startcue_rot.z-cue_rot.z)>250)

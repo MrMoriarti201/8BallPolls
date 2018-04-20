@@ -1,4 +1,4 @@
 sceneSetups:
-- path: Assets/Scenes/Web/Splash.unity
+- path: Assets/Scenes/Web/Accounts/Login.unity
   isLoaded: 1
   isActive: 1

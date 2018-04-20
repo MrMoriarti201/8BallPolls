@@ -71,9 +71,21 @@ public class Net : NetBase {
         GameManager.instance.LoadScene("Login");
 		GameManager.instance.PopupMessage("Please check your email and activate your account");
 	}
-	
-	// Called by the AttemptPasswordRecovery coroutine when it's finished executing
-	public void PasswordRecoveryAttempted(string callbackMessage)
+    public void RegistrationAttemptedFB(string callbackMessage)
+    {
+        Debug.Log(callbackMessage);
+        // If our registration failed,
+        if (callbackMessage.IsAnError())
+        {
+            
+            return;
+        }
+        GameManager.instance.LoadScene("Login");
+        GameManager.instance.PopupMessage("Please check your email and activate your account");
+    }
+
+    // Called by the AttemptPasswordRecovery coroutine when it's finished executing
+    public void PasswordRecoveryAttempted(string callbackMessage)
 	{
 		Debug.Log(callbackMessage);
 		// If our registration failed,
@@ -91,17 +103,20 @@ public class Net : NetBase {
 	public void OnLogin(string username, string pass){ 
 		usernameLogin = username;
 		passwordLogin = pass;
-		usernameLogin.TryToLogin(passwordLogin, LoginAttempted);
-		// Equivalent to: 
-		// StartCoroutine ( AS_Login.TryToLogin( usernameLogin, passwordLogin, LoginAttempted ) ) ;
+        usernameLogin.TryToLogin(passwordLogin, LoginAttempted);
+        // Equivalent to: 
+
+        //AS_Login.ChekedFB(accountInfo);
+		//StartCoroutine ( AS_Login.TryToLoginFB( usernameLogin, passwordLogin, LoginAttempted ) ) ;
 		Debug.Log("Attempting to Log In.." + usernameLogin + ":" + passwordLogin);
 		GameManager.instance.ShowLoading(true);
 	}
 	public void OnLoginFB(string username, string pass, string name = ""){
 		usernameLogin = username;
 		passwordLogin = pass;
+        
 		//usernameLogin.TryToLogin(passwordLogin, LoginAttempted);
-		StartCoroutine(AS_Login.TryToLoginFB(usernameLogin, passwordLogin, LoginAttempted, Namefb:name));
+		StartCoroutine(AS_Login.TryToLoginFB(username:username, password: pass,resultCallback: LoginAttempted, Namefb:name));
 		// Equivalent to: 
 		// StartCoroutine ( AS_Login.TryToLogin( usernameLogin, passwordLogin, LoginAttempted ) ) ;
 		Debug.Log("Attempting to Log In.." + usernameLogin + ":" + passwordLogin);
@@ -140,36 +155,41 @@ public class Net : NetBase {
 		accountInfo.fields.SetFieldValue("NickName",nickName);
 		accountInfo.fields.SetFieldValue("Country",country);
 
-
+        Debug.Log("выполнение registerBTN");
 		if (!AS_Login.CheckFields(accountInfo,ref guiMessage))
 		{
 			GameManager.instance.PopupMessage(guiMessage);
 		return;
 		}
+
 		// Online check with the given database
 		guiMessage = "Attempting to Register..";
 		accountInfo.TryToRegister(RegistrationAttempted);
 		// Equivalent to: 
 		// StartCoroutine ( AS_Login.TryToRegister( accountInfo, RegistrationAttempted ) ) ;
 		GameManager.instance.ShowLoading(true);
-	}
-	public void OnRegisterBtnFacebook(string email,string pass,string nickName){	
-		accountInfo.fields.SetFieldValue("email",email);   
-		accountInfo.fields.SetFieldValue("username",email);
-		accountInfo.fields.SetFieldValue("password",pass);
-		accountInfo.fields.SetFieldValue("NickName",nickName + pass);
+        Debug.Log("выполнился register");
+    }
+	public void OnRegisterBtnFacebook(string email,string pass,string nickName){
+        Register();
+        accountInfo.fields.SetFieldValue("username", email);
+        accountInfo.fields.SetFieldValue("email", email);
+        accountInfo.fields.SetFieldValue("password", pass);
+        accountInfo.fields.SetFieldValue("NickName", nickName);
+        accountInfo.fields.SetFieldValue("Country", "1");
 
 
-		Debug.Log ("OnRegisterBtn - -- " + email);
-		///if (!AS_Login.CheckFields(accountInfo,ref guiMessage))
-		//{
-		//	GameManager.instance.PopupMessage(guiMessage);
-		//	return;
-		///}
+        Debug.Log ("OnRegisterBtn - -- " + email);
+		if (!AS_Login.CheckFields(accountInfo,ref guiMessage))
+		{
+			GameManager.instance.PopupMessage(guiMessage);
+			return;
+		}
 		// Online check with the given database
 		guiMessage = "Attempting to Register..";
-		accountInfo.TryToRegister(RegistrationAttempted);
-		// Equivalent to: 
+        //accountInfo.TryToRegister(RegistrationAttempted);
+        StartCoroutine(AS_Login.TryToRegisterFB(accountInfo, RegistrationAttempted, email, nickName));
+        // Equivalent to: 
 		// StartCoroutine ( AS_Login.TryToRegister( accountInfo, RegistrationAttempted ) ) ;
 		GameManager.instance.ShowLoading(true);
 	}
